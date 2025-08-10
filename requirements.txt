@@ -1,0 +1,7 @@
+torch
+numpy
+scipy
+transformers
+torchaudio
+gradio
+# Note: OpenVoice requires manual installation from https://github.com/myshell-ai/OpenVoice
