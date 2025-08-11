@@ -2,6 +2,6 @@ torch
 numpy
 scipy
 transformers
-torchaudio
 gradio
-# Note: OpenVoice requires manual installation from https://github.com/myshell-ai/OpenVoice
+moviepy
+# Note: OpenVoice requires manual installation from its repository (e.g., git clone https://github.com/myshell-ai/OpenVoice).

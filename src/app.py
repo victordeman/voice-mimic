@@ -2,49 +2,41 @@ import gradio as gr
 from transcribe import transcribe_audio
 from translate import refine_and_translate
 from synthesize import synthesize_with_clone
-from pathlib import Path
 
-def process_audio(audio_path, target_lang):
-    """
-    Processes input audio through transcription, translation, and synthesis.
-    Args:
-        audio_path (str): Path to input audio.
-        target_lang (str): Target language code.
-    Returns:
-        str: Path to output audio.
-    """
-    # Step 1: Transcribe
-    print("Starting transcription...")
-    text = transcribe_audio(audio_path)
-    if not text:
-        return "Error during transcription."
-
-    # Step 2: Translate
-    print("Starting translation...")
-    translated_text = refine_and_translate(text, target_lang)
-    if not translated_text:
-        return "Error during translation."
-
-    # Step 3: Synthesize
-    print("Starting synthesis...")
-    voice_sample = "data/original_voice_sample.wav"
-    output_audio = synthesize_with_clone(voice_sample, translated_text, target_lang)
-    if not output_audio:
-        return "Error during synthesis."
-
-    return output_audio
+def process_media(media_path, voice_sample_path="data/original_voice_sample.wav"):
+    """Process MP3/MP4 input, translate to German, and synthesize in cloned voice."""
+    try:
+        # Step 1: Transcribe English audio
+        transcribed_text = transcribe_audio(media_path)
+        if not transcribed_text:
+            return None, "Transcription failed."
+        
+        # Step 2: Translate to German
+        translated_text = refine_and_translate(transcribed_text, target_lang="de")
+        if not translated_text:
+            return None, "Translation failed."
+        
+        # Step 3: Synthesize with cloned voice
+        output_audio = synthesize_with_clone(voice_sample_path, translated_text)
+        if not output_audio:
+            return None, "Synthesis failed."
+        
+        return output_audio, f"Transcription: {transcribed_text}\nTranslated (German): {translated_text}"
+    except Exception as e:
+        return None, f"Error: {str(e)}"
 
 # Gradio interface
 iface = gr.Interface(
-    fn=process_audio,
+    fn=process_media,
     inputs=[
-        gr.Audio(source="upload", type="filepath", label="Upload Audio"),
-        gr.Dropdown(choices=["es", "fr", "de"], label="Target Language", value="es")
+        gr.File(label="Upload MP3 or MP4", file_types=[".mp3", ".mp4"]),
+        gr.File(label="Voice Sample (WAV)", file_types=[".wav"])
     ],
-    outputs=gr.Audio(label="Output Audio"),
-    title="Voice Mimic System",
-    description="Upload an audio file and select a target language to translate and mimic the voice."
+    outputs=[
+        gr.Audio(label="Output Audio (German)"),
+        gr.Textbox(label="Transcription and Translation")
+    ],
+    title="Voice Mimic: English to German",
+    description="Upload an MP3 audio or MP4 video and a WAV voice sample to translate English speech to German in the same voice."
 )
-
-if __name__ == "__main__":
-    iface.launch(server_name="0.0.0.0", server_port=7860)
+iface.launch()
